@@ -7,7 +7,7 @@ const createToken = (userId) =>
 exports.signup = async (req, res) => {
   const { username, email, password } = req.body;
   try {
-    const user = await User.create({ username, email, password });
+    const user = await User.create({ username, email, password, role: "user" });
     const token = createToken(user._id);
     res.status(201).json({ token, user: { id: user._id, username, email } });
   } catch (err) {
