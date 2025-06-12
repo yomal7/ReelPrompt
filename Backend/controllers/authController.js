@@ -18,7 +18,7 @@ exports.signup = async (req, res) => {
 exports.signin = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user || !(await user.comparePassword(password)))
       return res.status(401).json({ error: "Invalid credentials" });
     const token = createToken(user._id);
