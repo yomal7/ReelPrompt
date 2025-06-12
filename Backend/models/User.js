@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    profilePicture: { type: String, default: "/images/default-profile.png" },
     prompts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Prompt" }],
   },
   { timestamps: true }
