@@ -8,17 +8,18 @@ async function createAdmin() {
   const existing = await User.findOne({ role: "admin" });
   if (existing) {
     console.log("Admin already exists:", existing.email);
+    await mongoose.disconnect();
     process.exit();
   }
-  const hashedPassword = await bcrypt.hash("12345678a", 12);
   const admin = new User({
     username: "admin",
     email: "admin@reelprompt.com",
-    password: hashedPassword,
+    password: "12345678a",
     role: "admin",
   });
   await admin.save();
   console.log("Admin user created!");
+  await mongoose.disconnect();
   process.exit();
 }
 
