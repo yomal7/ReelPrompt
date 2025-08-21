@@ -20,4 +20,10 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ReelPrompt.Api\ReelPrompt.Api.csproj" />
+    <ProjectReference Include="..\ReelPrompt.Core\ReelPrompt.Core.csproj" />
+    <ProjectReference Include="..\ReelPrompt.Infrastructure\ReelPrompt.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
