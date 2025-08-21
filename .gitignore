@@ -1,0 +1,39 @@
+# Build results
+bin/
+obj/
+out/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vs/
+
+# VS Code settings
+.vscode/
+
+# Logs
+*.log
+*.tlog
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Secrets (you’ll keep them in user-secrets or env vars)
+appsettings.Development.json
+appsettings.Local.json
+
+# Entity Framework Migrations backup files
+*.Designer.cs
+*.dbmdl
+
+# Docker
+docker-compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
