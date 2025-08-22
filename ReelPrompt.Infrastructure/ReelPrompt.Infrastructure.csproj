@@ -15,6 +15,12 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference Core so Infrastructure can use User, Movie, etc. -->
+    <ProjectReference Include="..\ReelPrompt.Core\ReelPrompt.Core.csproj" />
+ </ItemGroup>
 
 </Project>
