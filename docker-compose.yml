@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: movieapp_postgres
+    environment:
+      POSTGRES_DB: movieapp
+      POSTGRES_USER: movieuser
+      POSTGRES_PASSWORD: moviepass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - movieapp_network
+
+volumes:
+  postgres_data:
+
+networks:
+  movieapp_network:
+    driver: bridge
