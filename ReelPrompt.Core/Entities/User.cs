@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace MovieApp.Core.Entities;
+namespace ReelPrompt.Core.Entities;
 
 // In .NET, we inherit from IdentityUser instead of creating our own User class
 // IdentityUser already provides Id, Email, PasswordHash, and more authentication fields

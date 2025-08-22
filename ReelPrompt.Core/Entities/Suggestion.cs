@@ -1,4 +1,4 @@
-namespace MovieApp.Core.Entities;
+namespace ReelPrompt.Core.Entities;
 
 public class Suggestion
 {
