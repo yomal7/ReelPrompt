@@ -1,0 +1,38 @@
+{
+  "development": {
+    "username": "movieuser",
+    "password": "moviepass123",
+    "database": "movie_recommendation",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "bigNumberStrings": true
+    },
+    "logging": true
+  },
+  "test": {
+    "username": "movieuser",
+    "password": "moviepass123",
+    "database": "movie_recommendation_test",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "bigNumberStrings": true
+    },
+    "logging": false
+  },
+  "production": {
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "bigNumberStrings": true,
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "logging": false
+  }
+}
