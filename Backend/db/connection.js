@@ -27,11 +27,11 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log("✅ PostgreSQL connected successfully");
 
-    if (process.env.NODE_ENV === "development") {
-      // Sync database in development
-      await sequelize.sync({ alter: true });
-      console.log("✅ Database synchronized");
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   // Sync database in development
+    //   await sequelize.sync({ alter: true });
+    //   console.log("✅ Database synchronized");
+    // }
   } catch (error) {
     console.error("❌ Unable to connect to PostgreSQL:", error.message);
     process.exit(1);
