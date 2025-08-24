@@ -1,13 +1,14 @@
 {
   "development": {
     "username": "movieuser",
-    "password": "moviepass123",
+    "password": "yomal",
     "database": "movie_recommendation",
-    "host": "localhost",
+    "host": "127.0.0.1",
     "port": 5432,
     "dialect": "postgres",
     "dialectOptions": {
-      "bigNumberStrings": true
+      "bigNumberStrings": true,
+      "ssl": false
     },
     "logging": true
   },
@@ -15,7 +16,7 @@
     "username": "movieuser",
     "password": "moviepass123",
     "database": "movie_recommendation_test",
-    "host": "localhost",
+    "host": "127.0.0.1",
     "port": 5432,
     "dialect": "postgres",
     "dialectOptions": {
