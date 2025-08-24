@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "movieuser",
+    "username": "postgres",
     "password": "yomal",
     "database": "movie_recommendation",
-    "host": "postgres",
+    "host": "127.0.0.1",
     "port": 5432,
     "dialect": "postgres",
     "dialectOptions": {

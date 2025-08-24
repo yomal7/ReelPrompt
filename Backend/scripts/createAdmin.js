@@ -15,7 +15,7 @@ async function createAdmin() {
     if (existingAdmin) {
       console.log("ℹ️ Admin already exists:", existingAdmin.email);
       console.log("👤 Username:", existingAdmin.username);
-      await sequelize.close();
+      // Don't close connection here - wait until all operations complete
       return;
     }
 
@@ -24,36 +24,34 @@ async function createAdmin() {
     const admin = await User.create({
       username: "admin",
       email: "admin@movieapp.com",
-      passwordHash: "Admin123!", // Will be hashed by the model
+      password: "Admin123!",
       name: "System Administrator",
       role: "admin",
     });
 
-    console.log("✅ Admin user created successfully!");
-    console.log("📧 Email:", admin.email);
-    console.log("👤 Username:", admin.username);
-    console.log("🔑 Password: Admin123!");
-    console.log("");
-    console.log("⚠️  Please change the password after first login!");
+    console.log("✅ Admin created successfully:", admin.email);
 
-    await sequelize.close();
-    console.log("✅ Database connection closed");
+    // Don't call any additional operations after this point
   } catch (error) {
-    console.error("❌ Error creating admin user:", error);
-    process.exit(1);
+    console.error("❌ Error:", error.message);
+  } finally {
+    // Close connection only once at the end of the function
+    console.log("🔄 Closing database connection...");
+    await sequelize.close();
+    console.log("✅ Connection closed");
   }
 }
 
-// Run the script
+// Execute the function and properly handle the promise
 if (require.main === module) {
   createAdmin()
     .then(() => {
-      console.log("🎉 Script completed successfully");
-      process.exit(0);
+      console.log("✅ Script completed");
+      process.exit(0); // Exit with success code
     })
     .catch((error) => {
       console.error("❌ Script failed:", error);
-      process.exit(1);
+      process.exit(1); // Exit with error code
     });
 }
 
