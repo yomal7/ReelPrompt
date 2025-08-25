@@ -1,261 +1,147 @@
+// yomal7/reelprompt/ReelPrompt-express_backend/Backend/Services/suggestionService.js
 const tmdbService = require("./tmdbService");
 
 class SuggestionService {
   constructor() {
     this.model = null;
     this.transformers = null;
-    this.moviePool = []; // Cache for movie pool
+    this.moviePool = []; // Cache for the movie pool
+    this.isBuildingPool = false; // Flag to prevent concurrent builds
   }
 
   async initialize() {
     if (!this.transformers) {
+      // Use dynamic import for ESM compatibility
       this.transformers = await import("@xenova/transformers");
     }
 
     if (!this.model) {
+      console.log("🚀 Initializing AI model...");
       this.model = await this.transformers.pipeline(
         "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2"
+        "Xenova/bge-small-en-v1.5" // Using the better retrieval model
       );
+      console.log("✅ AI model initialized.");
     }
-  }
 
-  async buildMoviePool() {
-    try {
-      console.log("🎬 Building expanded movie pool...");
-
-      // Get multiple pages and genres for a larger pool
-      const movieSources = await Promise.all([
-        // Popular movies - multiple pages
-        tmdbService.getPopularMovies(1),
-        tmdbService.getPopularMovies(2),
-        tmdbService.getPopularMovies(3),
-
-        // Latest movies - multiple pages
-        tmdbService.getLatestMovies(1),
-        tmdbService.getLatestMovies(2),
-        tmdbService.getLatestMovies(3),
-
-        // Genre-based discovery - multiple pages per genre
-        // Action movies
-        tmdbService.discoverMovies({ genre: 28, page: 1 }),
-        tmdbService.discoverMovies({ genre: 28, page: 2 }),
-        tmdbService.discoverMovies({ genre: 28, page: 3 }),
-        tmdbService.discoverMovies({ genre: 28, page: 4 }),
-        tmdbService.discoverMovies({ genre: 28, page: 5 }),
-        tmdbService.discoverMovies({ genre: 28, page: 6 }),
-
-        // Comedy movies
-        tmdbService.discoverMovies({ genre: 35, page: 1 }),
-        tmdbService.discoverMovies({ genre: 35, page: 2 }),
-        tmdbService.discoverMovies({ genre: 35, page: 3 }),
-        tmdbService.discoverMovies({ genre: 35, page: 4 }),
-        tmdbService.discoverMovies({ genre: 35, page: 5 }),
-
-        // Drama movies
-        tmdbService.discoverMovies({ genre: 18, page: 1 }),
-        tmdbService.discoverMovies({ genre: 18, page: 2 }),
-        tmdbService.discoverMovies({ genre: 18, page: 3 }),
-
-        // Sci-Fi movies
-        tmdbService.discoverMovies({ genre: 878, page: 1 }),
-        tmdbService.discoverMovies({ genre: 878, page: 2 }),
-        tmdbService.discoverMovies({ genre: 878, page: 3 }),
-        tmdbService.discoverMovies({ genre: 878, page: 4 }),
-        tmdbService.discoverMovies({ genre: 878, page: 5 }),
-        tmdbService.discoverMovies({ genre: 878, page: 6 }),
-
-        // Horror movies
-        tmdbService.discoverMovies({ genre: 27, page: 1 }),
-        tmdbService.discoverMovies({ genre: 27, page: 2 }),
-        tmdbService.discoverMovies({ genre: 27, page: 3 }),
-
-        // Romance movies
-        tmdbService.discoverMovies({ genre: 10749, page: 1 }),
-        tmdbService.discoverMovies({ genre: 10749, page: 2 }),
-        tmdbService.discoverMovies({ genre: 10749, page: 3 }),
-        tmdbService.discoverMovies({ genre: 10749, page: 4 }),
-        tmdbService.discoverMovies({ genre: 10749, page: 5 }),
-        tmdbService.discoverMovies({ genre: 10749, page: 6 }),
-
-        // Thriller movies
-        tmdbService.discoverMovies({ genre: 53, page: 1 }),
-        tmdbService.discoverMovies({ genre: 53, page: 2 }),
-        tmdbService.discoverMovies({ genre: 53, page: 3 }),
-        tmdbService.discoverMovies({ genre: 53, page: 4 }),
-        tmdbService.discoverMovies({ genre: 53, page: 5 }),
-        tmdbService.discoverMovies({ genre: 53, page: 6 }),
-
-        // Adventure movies
-        tmdbService.discoverMovies({ genre: 12, page: 1 }),
-        tmdbService.discoverMovies({ genre: 12, page: 2 }),
-        tmdbService.discoverMovies({ genre: 12, page: 3 }),
-        tmdbService.discoverMovies({ genre: 12, page: 4 }),
-        tmdbService.discoverMovies({ genre: 12, page: 5 }),
-        tmdbService.discoverMovies({ genre: 12, page: 6 }),
-
-        // Animation movies
-        tmdbService.discoverMovies({ genre: 16, page: 1 }),
-        tmdbService.discoverMovies({ genre: 16, page: 2 }),
-
-        // Crime movies
-        tmdbService.discoverMovies({ genre: 80, page: 1 }),
-        tmdbService.discoverMovies({ genre: 80, page: 2 }),
-        tmdbService.discoverMovies({ genre: 80, page: 3 }),
-        tmdbService.discoverMovies({ genre: 80, page: 4 }),
-        tmdbService.discoverMovies({ genre: 80, page: 5 }),
-        tmdbService.discoverMovies({ genre: 80, page: 6 }),
-
-        // Fantasy movies
-        tmdbService.discoverMovies({ genre: 14, page: 1 }),
-        tmdbService.discoverMovies({ genre: 14, page: 2 }),
-        tmdbService.discoverMovies({ genre: 14, page: 3 }),
-        tmdbService.discoverMovies({ genre: 14, page: 4 }),
-
-        // Mystery movies
-        tmdbService.discoverMovies({ genre: 9648, page: 1 }),
-        tmdbService.discoverMovies({ genre: 9648, page: 2 }),
-
-        // Top rated movies from different years
-        tmdbService.discoverMovies({ minRating: 7.5, page: 1 }),
-        tmdbService.discoverMovies({ minRating: 7.5, page: 2 }),
-        tmdbService.discoverMovies({ minRating: 7.5, page: 3 }),
-        tmdbService.discoverMovies({ minRating: 7.5, page: 4 }),
-        tmdbService.discoverMovies({ minRating: 7.5, page: 5 }),
-        tmdbService.discoverMovies({ minRating: 7.5, page: 6 }),
-
-        // Movies from different decades
-        tmdbService.discoverMovies({ year: 2023, page: 1 }),
-        tmdbService.discoverMovies({ year: 2022, page: 1 }),
-        tmdbService.discoverMovies({ year: 2021, page: 1 }),
-        tmdbService.discoverMovies({ year: 2020, page: 1 }),
-        tmdbService.discoverMovies({ year: 2019, page: 1 }),
-        tmdbService.discoverMovies({ year: 2018, page: 1 }),
-      ]);
-
-      // Combine all movies and remove duplicates
-      const allMovies = [];
-      const seenIds = new Set();
-
-      movieSources.forEach((source) => {
-        if (source && source.results) {
-          source.results.forEach((movie) => {
-            if (!seenIds.has(movie.tmdbId)) {
-              seenIds.add(movie.tmdbId);
-              allMovies.push(movie);
-            }
-          });
-        }
-      });
-
-      console.log(`✅ Built movie pool with ${allMovies.length} movies`);
-      return allMovies;
-    } catch (error) {
-      console.error("❌ Error building movie pool:", error);
-      // Fallback to just popular movies
-      const fallback = await tmdbService.getPopularMovies();
-      return fallback.results || [];
+    if (this.moviePool.length === 0 && !this.isBuildingPool) {
+      this.isBuildingPool = true;
+      try {
+        this.moviePool = await tmdbService.getMoviePoolForSuggestions();
+      } finally {
+        this.isBuildingPool = false;
+      }
     }
   }
 
   async getSuggestions(prompt) {
-    try {
-      await this.initialize();
+    await this.initialize();
 
-      console.log(`🎬 Processing suggestion for: "${prompt}"`);
+    console.log(`🎬 Processing suggestion for: "${prompt}"`);
 
-      // 1. Build expanded movie pool
-      const moviePool = await this.buildMoviePool();
+    if (this.moviePool.length === 0) {
+      console.warn("Movie pool is empty, using fallback.");
+      const popular = await tmdbService.getPopularMovies();
+      return popular.results.slice(0, 5);
+    }
 
-      if (moviePool.length === 0) {
-        throw new Error("No movies available in the pool");
-      }
+    console.log(`📚 Using ${this.moviePool.length} movies for suggestions`);
 
-      console.log(`📚 Using ${moviePool.length} movies for suggestions`);
+    const moviesWithOverviews = this.moviePool.filter(
+      (movie) => movie.overview && movie.overview.trim().length > 20
+    );
+    console.log(`📝 ${moviesWithOverviews.length} movies have valid overviews`);
 
-      // 2. Filter out movies without overviews
-      const moviesWithOverviews = moviePool.filter(
-        (movie) => movie.overview && movie.overview.trim().length > 0
-      );
+    if (moviesWithOverviews.length === 0) {
+      return this.moviePool.slice(0, 5);
+    }
 
-      console.log(`📝 ${moviesWithOverviews.length} movies have overviews`);
+    // 🔧 BATCH PROCESSING TO PREVENT MEMORY ISSUES
+    const BATCH_SIZE = 100; // Process 100 movies at a time
+    const MAX_MOVIES_TO_PROCESS = 3000; // Limit total movies to process
 
-      const movieOverviews = moviesWithOverviews.map((movie) => movie.overview);
+    // Limit the number of movies to process
+    const moviesToProcess = moviesWithOverviews.slice(0, MAX_MOVIES_TO_PROCESS);
+    console.log(
+      `⚡ Processing ${moviesToProcess.length} movies in batches of ${BATCH_SIZE}`
+    );
 
-      // 3. Create embeddings
-      const promptEmbedding = await this.model(prompt, {
-        pooling: "mean",
-        normalize: true,
-      });
+    // Get prompt embedding once
+    console.log("🧠 Creating prompt embedding...");
+    const promptEmbedding = await this.model(prompt, {
+      pooling: "mean",
+      normalize: true,
+    });
 
-      const movieEmbeddings = await this.model(movieOverviews, {
-        pooling: "mean",
-        normalize: true,
-      });
+    const allScores = [];
 
-      // 4. Calculate similarity scores
-      const scores = [];
-      for (let i = 0; i < movieEmbeddings.length; i++) {
-        const score = this.transformers.cos_sim(
-          promptEmbedding.data,
-          movieEmbeddings[i].data
-        );
-        scores.push({
-          movie: moviesWithOverviews[i],
-          score: score,
-          title: moviesWithOverviews[i].title,
-        });
-      }
-
-      // 5. Sort by score (highest first)
-      scores.sort((a, b) => b.score - a.score);
-
-      // 6. Log top scores for debugging
-      console.log("🏆 Top 5 similarity scores:");
-      scores.slice(0, 5).forEach((item, index) => {
-        console.log(`  ${index + 1}. ${item.title}: ${item.score.toFixed(4)}`);
-      });
-
-      // 7. Return top movies (lower threshold to ensure results)
-      const minScore = 0.05; // Lower threshold to get more results
-      const topMovies = scores
-        .filter((s) => s.score > minScore)
-        .slice(0, 8) // Get more movies initially
-        .map((s) => s.movie);
-
-      // 8. Fallback: if still no results, return highest scoring movies regardless of threshold
-      if (topMovies.length === 0) {
-        console.log(
-          "⚠️ No movies above threshold, returning top scored movies"
-        );
-        const fallbackMovies = scores.slice(0, 5).map((s) => s.movie);
-        console.log(
-          `✅ Returning ${fallbackMovies.length} fallback suggestions`
-        );
-        return fallbackMovies;
-      }
+    // Process movies in batches
+    for (let i = 0; i < moviesToProcess.length; i += BATCH_SIZE) {
+      const batch = moviesToProcess.slice(i, i + BATCH_SIZE);
+      const batchOverviews = batch.map((movie) => movie.overview);
 
       console.log(
-        `✅ Found ${topMovies.length} movie suggestions above threshold`
+        `🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
+          moviesToProcess.length / BATCH_SIZE
+        )} (${batch.length} movies)`
       );
-      return topMovies.slice(0, 5); // Return top 5
-    } catch (error) {
-      console.error("❌ Error in getSuggestions:", error);
 
-      // Ultimate fallback: return some popular movies
       try {
-        console.log("🔄 Using fallback popular movies");
-        const popularMovies = await tmdbService.getPopularMovies();
-        const fallbackSuggestions = popularMovies.results.slice(0, 5);
-        console.log(
-          `✅ Returning ${fallbackSuggestions.length} fallback suggestions`
+        // Create embeddings for this batch
+        const batchEmbeddings = await this.model(batchOverviews, {
+          pooling: "mean",
+          normalize: true,
+        });
+
+        // Calculate similarity scores for this batch
+        for (let j = 0; j < batchEmbeddings.length; j++) {
+          const score = this.transformers.cos_sim(
+            promptEmbedding.data,
+            batchEmbeddings[j].data
+          );
+          allScores.push({ movie: batch[j], score });
+        }
+
+        // Small delay to prevent overwhelming the system
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      } catch (batchError) {
+        console.error(
+          `❌ Error processing batch ${Math.floor(i / BATCH_SIZE) + 1}:`,
+          batchError.message
         );
-        return fallbackSuggestions;
-      } catch (fallbackError) {
-        console.error("❌ Even fallback failed:", fallbackError);
-        throw new Error("Failed to get any movie suggestions");
+        // Continue with next batch
       }
     }
+
+    console.log(`✅ Processed ${allScores.length} movies successfully`);
+
+    // Sort all scores
+    allScores.sort((a, b) => b.score - a.score);
+
+    console.log("🏆 Top 10 similarity scores:");
+    allScores.slice(0, 10).forEach((item, index) => {
+      console.log(
+        `  ${index + 1}. ${item.movie.title}: ${item.score.toFixed(4)}`
+      );
+    });
+
+    // Use a lower threshold since we're processing fewer movies
+    const minScore = 0.3;
+    let topMovies = allScores
+      .filter((s) => s.score > minScore)
+      .map((s) => s.movie);
+
+    // Fallback to top scored movies
+    if (topMovies.length < 5) {
+      console.log(
+        "⚠️ Not enough movies above threshold, returning top scored movies"
+      );
+      topMovies = allScores.slice(0, 5).map((s) => s.movie);
+    }
+
+    const finalSuggestions = topMovies.slice(0, 5);
+    console.log(`✅ Returning ${finalSuggestions.length} suggestions`);
+    return finalSuggestions;
   }
 }
 
