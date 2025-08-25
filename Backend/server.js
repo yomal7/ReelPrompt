@@ -3,7 +3,12 @@ const cors = require("cors");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 const { connectDB } = require("./db/connection");
+
+// Import routes
 const authRoutes = require("./routes/auth");
+const movieRoutes = require("./routes/movies");
+const userRoutes = require("./routes/users");
+const suggestionRoutes = require("./routes/suggestions");
 
 require("dotenv").config();
 
@@ -115,6 +120,9 @@ app.get("/health", (req, res) => {
 
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/movies", movieRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/suggestions", suggestionRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {
