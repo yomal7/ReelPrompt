@@ -5,21 +5,21 @@ class SuggestionService {
   constructor() {
     this.model = null;
     this.transformers = null;
-    this.moviePool = []; // Cache for the movie pool
-    this.isBuildingPool = false; // Flag to prevent concurrent builds
+    this.moviePool = [];
+    this.isBuildingPool = false;
   }
 
   async initialize() {
     if (!this.transformers) {
-      // Use dynamic import for ESM compatibility
       this.transformers = await import("@xenova/transformers");
     }
 
     if (!this.model) {
       console.log("🚀 Initializing AI model...");
+      // Use the specialized movie recommendation model
       this.model = await this.transformers.pipeline(
         "feature-extraction",
-        "Xenova/bge-small-en-v1.5" // Using the better retrieval model
+        "Xenova/all-MiniLM-L6-v2"
       );
       console.log("✅ AI model initialized.");
     }
@@ -40,34 +40,27 @@ class SuggestionService {
     console.log(`🎬 Processing suggestion for: "${prompt}"`);
 
     if (this.moviePool.length === 0) {
-      console.warn("Movie pool is empty, using fallback.");
+      console.warn(
+        "Movie pool is not ready, returning popular movies as fallback."
+      );
       const popular = await tmdbService.getPopularMovies();
-      return popular.results.slice(0, 5);
+      return popular.results.slice(0, 10);
     }
-
-    console.log(`📚 Using ${this.moviePool.length} movies for suggestions`);
 
     const moviesWithOverviews = this.moviePool.filter(
       (movie) => movie.overview && movie.overview.trim().length > 20
     );
-    console.log(`📝 ${moviesWithOverviews.length} movies have valid overviews`);
 
     if (moviesWithOverviews.length === 0) {
-      return this.moviePool.slice(0, 5);
+      console.warn("No movies with overviews found, returning from pool.");
+      return this.moviePool.slice(0, 10);
     }
 
-    // 🔧 BATCH PROCESSING TO PREVENT MEMORY ISSUES
-    const BATCH_SIZE = 100; // Process 100 movies at a time
-    const MAX_MOVIES_TO_PROCESS = 3000; // Limit total movies to process
-
-    // Limit the number of movies to process
-    const moviesToProcess = moviesWithOverviews.slice(0, MAX_MOVIES_TO_PROCESS);
     console.log(
-      `⚡ Processing ${moviesToProcess.length} movies in batches of ${BATCH_SIZE}`
+      `📝 Using ${moviesWithOverviews.length} movies with valid overviews for suggestions`
     );
 
-    // Get prompt embedding once
-    console.log("🧠 Creating prompt embedding...");
+    // Create embedding for the user's prompt
     const promptEmbedding = await this.model(prompt, {
       pooling: "mean",
       normalize: true,
@@ -75,73 +68,45 @@ class SuggestionService {
 
     const allScores = [];
 
-    // Process movies in batches
-    for (let i = 0; i < moviesToProcess.length; i += BATCH_SIZE) {
-      const batch = moviesToProcess.slice(i, i + BATCH_SIZE);
+    // **FIXED & OPTIMIZED BATCH PROCESSING**
+    // Process all available movies in manageable chunks
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < moviesWithOverviews.length; i += BATCH_SIZE) {
+      const batch = moviesWithOverviews.slice(i, i + BATCH_SIZE);
       const batchOverviews = batch.map((movie) => movie.overview);
 
-      console.log(
-        `🔄 Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
-          moviesToProcess.length / BATCH_SIZE
-        )} (${batch.length} movies)`
-      );
+      const batchEmbeddings = await this.model(batchOverviews, {
+        pooling: "mean",
+        normalize: true,
+      });
 
-      try {
-        // Create embeddings for this batch
-        const batchEmbeddings = await this.model(batchOverviews, {
-          pooling: "mean",
-          normalize: true,
-        });
-
-        // Calculate similarity scores for this batch
-        for (let j = 0; j < batchEmbeddings.length; j++) {
-          const score = this.transformers.cos_sim(
-            promptEmbedding.data,
-            batchEmbeddings[j].data
-          );
-          allScores.push({ movie: batch[j], score });
-        }
-
-        // Small delay to prevent overwhelming the system
-        await new Promise((resolve) => setTimeout(resolve, 10));
-      } catch (batchError) {
-        console.error(
-          `❌ Error processing batch ${Math.floor(i / BATCH_SIZE) + 1}:`,
-          batchError.message
+      // **BUG FIX**: Correctly iterate over the batch and calculate similarity
+      for (let j = 0; j < batch.length; j++) {
+        const movieEmbedding = batchEmbeddings[j].data;
+        const score = this.transformers.cos_sim(
+          promptEmbedding.data,
+          movieEmbedding
         );
-        // Continue with next batch
+        allScores.push({ movie: batch[j], score });
       }
     }
 
-    console.log(`✅ Processed ${allScores.length} movies successfully`);
-
-    // Sort all scores
+    // Sort all movies by their similarity score in descending order
     allScores.sort((a, b) => b.score - a.score);
 
-    console.log("🏆 Top 10 similarity scores:");
-    allScores.slice(0, 10).forEach((item, index) => {
+    console.log("🏆 Top 5 similarity scores:");
+    allScores.slice(0, 5).forEach((item, index) => {
       console.log(
         `  ${index + 1}. ${item.movie.title}: ${item.score.toFixed(4)}`
       );
     });
 
-    // Use a lower threshold since we're processing fewer movies
-    const minScore = 0.3;
-    let topMovies = allScores
-      .filter((s) => s.score > minScore)
-      .map((s) => s.movie);
+    // **IMPROVED FALLBACK LOGIC**
+    // Even if no movie meets a high similarity threshold, we should still provide the best possible matches.
+    const suggestions = allScores.slice(0, 10).map((s) => s.movie);
 
-    // Fallback to top scored movies
-    if (topMovies.length < 5) {
-      console.log(
-        "⚠️ Not enough movies above threshold, returning top scored movies"
-      );
-      topMovies = allScores.slice(0, 5).map((s) => s.movie);
-    }
-
-    const finalSuggestions = topMovies.slice(0, 5);
-    console.log(`✅ Returning ${finalSuggestions.length} suggestions`);
-    return finalSuggestions;
+    console.log(`✅ Returning ${suggestions.length} suggestions.`);
+    return suggestions;
   }
 }
 
