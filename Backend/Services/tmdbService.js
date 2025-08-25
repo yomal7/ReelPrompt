@@ -97,14 +97,54 @@ class TMDBService {
   }
 
   // Discover movies with filters
-  async discoverMovies(filters = {}, page = 1) {
+  // async discoverMovies(filters = {}, page = 1) {
+  //   try {
+  //     const params = {
+  //       page,
+  //       language: "en-US",
+  //       sort_by: filters.sortBy || "popularity.desc",
+  //       ...filters,
+  //     };
+
+  //     const response = await this.api.get("/discover/movie", { params });
+
+  //     return {
+  //       ...response.data,
+  //       results: response.data.results.map((movie) => this.formatMovie(movie)),
+  //     };
+  //   } catch (error) {
+  //     console.error("Error discovering movies:", error);
+  //     throw new Error("Failed to discover movies");
+  //   }
+  // }
+
+  // Add this method to your existing TMDBService class
+
+  async discoverMovies(options = {}) {
     try {
       const params = {
-        page,
+        page: options.page || 1,
         language: "en-US",
-        sort_by: filters.sortBy || "popularity.desc",
-        ...filters,
+        sort_by: "popularity.desc",
+        include_adult: false,
+        include_video: false,
+        "vote_count.gte": 50, // Ensure movies have enough votes
       };
+
+      // Add genre filter if provided
+      if (options.genre) {
+        params.with_genres = options.genre;
+      }
+
+      // Add year filter if provided
+      if (options.year) {
+        params.year = options.year;
+      }
+
+      // Add minimum rating if provided
+      if (options.minRating) {
+        params["vote_average.gte"] = options.minRating;
+      }
 
       const response = await this.api.get("/discover/movie", { params });
 
@@ -113,8 +153,8 @@ class TMDBService {
         results: response.data.results.map((movie) => this.formatMovie(movie)),
       };
     } catch (error) {
-      console.error("Error discovering movies:", error);
-      throw new Error("Failed to discover movies");
+      console.error("❌ Error discovering movies:", error.message);
+      throw error;
     }
   }
 
