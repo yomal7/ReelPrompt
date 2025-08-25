@@ -172,6 +172,75 @@ class TMDBService {
     }
   }
 
+  // Enhance for the suggestions
+  async getMoviePoolForSuggestions() {
+    console.log("🎬 Building expanded movie pool...");
+    const promises = [];
+
+    // 1. Fetch Top Rated movies (high quality content)
+    for (let i = 1; i <= 25; i++) {
+      // 25 pages * 20 movies = 500 movies
+      promises.push(
+        this.api.get("/movie/top_rated", {
+          params: { page: i, language: "en-US" },
+        })
+      );
+    }
+
+    // 2. Fetch Popular movies (current and relevant content)
+    for (let i = 1; i <= 25; i++) {
+      // 25 pages * 20 movies = 500 movies
+      promises.push(
+        this.api.get("/movie/popular", {
+          params: { page: i, language: "en-US" },
+        })
+      );
+    }
+
+    // 3. Fetch a wide range of movies from different genres
+    const genresToFetch = [
+      28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878,
+      10770, 53, 10752, 37,
+    ];
+    for (const genreId of genresToFetch) {
+      for (let i = 1; i <= 15; i++) {
+        // 15 pages * 20 movies * 19 genres = ~5700 movies
+        promises.push(
+          this.api.get("/discover/movie", {
+            params: {
+              with_genres: genreId,
+              page: i,
+              language: "en-US",
+              "vote_count.gte": 100,
+            },
+          })
+        );
+      }
+    }
+
+    const results = await Promise.allSettled(promises);
+    const allMovies = [];
+    const seenIds = new Set();
+
+    results.forEach((result) => {
+      if (
+        result.status === "fulfilled" &&
+        result.value.data &&
+        result.value.data.results
+      ) {
+        result.value.data.results.forEach((movie) => {
+          if (!seenIds.has(movie.id)) {
+            seenIds.add(movie.id);
+            allMovies.push(this.formatMovie(movie));
+          }
+        });
+      }
+    });
+
+    console.log(`✅ Built movie pool with ${allMovies.length} unique movies`);
+    return allMovies;
+  }
+
   // Format movie data
   formatMovie(movie) {
     return {
