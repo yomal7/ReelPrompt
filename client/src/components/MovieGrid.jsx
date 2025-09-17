@@ -3,12 +3,11 @@ import LoadingSpinner from "./LoadingSpinner";
 import MovieCard from "./MovieCard";
 
 const SkeletonCard = () => (
-  <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700/50 animate-pulse">
-    <div className="aspect-[2/3] bg-gray-700/50 skeleton"></div>
+  <div className="bg-white rounded-xl overflow-hidden shadow-lg animate-pulse">
+    <div className="aspect-[2/3] bg-slate-200"></div>
     <div className="p-4 space-y-3">
-      <div className="h-4 bg-gray-700/50 rounded skeleton"></div>
-      <div className="h-3 bg-gray-700/50 rounded w-3/4 skeleton"></div>
-      <div className="h-3 bg-gray-700/50 rounded w-1/2 skeleton"></div>
+      <div className="h-4 bg-slate-200 rounded"></div>
+      <div className="h-3 bg-slate-200 rounded w-3/4"></div>
     </div>
   </div>
 );
@@ -16,37 +15,23 @@ const SkeletonCard = () => (
 const EmptyState = ({ message, icon: Icon = Film }) => (
   <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
     <div className="relative mb-6">
-      <div className="p-4 bg-gray-800/50 backdrop-blur-sm rounded-full border border-gray-700/50">
-        <Icon className="h-12 w-12 text-gray-400" />
+      <div className="p-4 bg-slate-800/50 backdrop-blur-sm rounded-full border border-slate-700/50">
+        <Icon className="h-12 w-12 text-slate-400" />
       </div>
-      <Sparkles className="h-6 w-6 text-indigo-400 absolute -top-1 -right-1 animate-pulse" />
+      <Sparkles className="h-6 w-6 text-cyan-400 absolute -top-1 -right-1 animate-pulse" />
     </div>
     <h3 className="text-xl font-semibold text-white mb-2">No Movies Found</h3>
-    <p className="text-gray-400 max-w-md leading-relaxed">{message}</p>
+    <p className="text-slate-400 max-w-md leading-relaxed">{message}</p>
   </div>
 );
 
-const MovieGrid = ({
+              className="animate-fade-in hover:z-10 relative"
   movies = [],
   loading = false,
   showFavorites = false,
-  onToggleFavorite,
-  emptyMessage = "No movies found",
-}) => {
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4">
-            <LoadingSpinner size="xl" />
-            <p className="text-gray-400 animate-pulse">
-              Loading amazing movies...
-            </p>
-          </div>
-        </div>
-
+      <div className="animate-slide-up">
         {/* Loading skeleton grid */}
-        <div className="movie-grid">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {Array.from({ length: 12 }).map((_, index) => (
             <SkeletonCard key={index} />
           ))}

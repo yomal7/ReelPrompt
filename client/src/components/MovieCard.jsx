@@ -23,37 +23,33 @@ const MovieCard = ({ movie, showFavorite = false, onToggleFavorite }) => {
 
   return (
     <Link to={`/movie/${movie.tmdbId || movie.id}`} className="block group">
-      <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl overflow-hidden border border-gray-700/50 hover:border-indigo-500/50 transition-all duration-300 hover:transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20">
+      <div className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-2 hover:scale-105">
         {/* Image Container - Fixed aspect ratio */}
         <div className="relative aspect-[2/3] overflow-hidden">
           <img
             src={posterUrl}
             alt={movie.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               e.target.src =
-                "https://via.placeholder.com/400x600/374151/9CA3AF?text=No+Image";
+                "https://via.placeholder.com/400x600/e2e8f0/64748b?text=No+Image";
             }}
           />
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-          {/* Play button overlay */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 border border-white/30 hover:bg-white/30 transition-colors">
-              <Play className="h-6 w-6 text-white fill-white" />
-            </div>
-          </div>
-
           {/* Rating badge */}
           {rating > 0 && (
-            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/10">
-              <div className="flex items-center space-x-1">
-                <Star className="h-3.5 w-3.5 text-yellow-400 fill-current" />
-                <span className="text-white text-sm font-semibold">
-                  {formattedRating}
-                </span>
+            <div className="absolute bottom-2 left-2">
+              <div className="bg-slate-900/90 backdrop-blur-sm px-2 py-1 rounded-full">
+                <div className="flex items-center space-x-1">
+                  <div className="w-8 h-8 rounded-full bg-slate-800 border-2 border-cyan-400 flex items-center justify-center relative">
+                    <span className="text-white text-xs font-bold">
+                      {Math.round(rating * 10)}
+                    </span>
+                    <div className="absolute inset-0 rounded-full" style={{
+                      background: `conic-gradient(#06b6d4 ${rating * 36}deg, transparent ${rating * 36}deg)`
+                    }}></div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -62,7 +58,7 @@ const MovieCard = ({ movie, showFavorite = false, onToggleFavorite }) => {
           {showFavorite && (
             <button
               onClick={handleFavoriteClick}
-              className="absolute top-3 right-3 p-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10 hover:bg-black/80 transition-all duration-200 group/fav"
+              className="absolute top-2 right-2 p-2 bg-slate-900/70 backdrop-blur-sm rounded-full hover:bg-slate-900/90 transition-all duration-200 group/fav"
             >
               <Heart
                 className={`h-4 w-4 transition-transform duration-200 group-hover/fav:scale-110 ${
@@ -76,34 +72,16 @@ const MovieCard = ({ movie, showFavorite = false, onToggleFavorite }) => {
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-2">
           {/* Title */}
-          <h3 className="text-white font-semibold text-base leading-tight line-clamp-2 group-hover:text-indigo-300 transition-colors duration-200">
+          <h3 className="text-slate-900 font-semibold text-base leading-tight line-clamp-2 group-hover:text-cyan-600 transition-colors duration-200">
             {movie.title}
           </h3>
 
           {/* Meta info */}
-          <div className="flex items-center justify-between text-gray-400 text-sm">
-            <div className="flex items-center space-x-1">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>{releaseYear}</span>
-            </div>
-
-            {movie.genres && movie.genres.length > 0 && (
-              <span className="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full text-xs font-medium border border-indigo-500/30">
-                {Array.isArray(movie.genres)
-                  ? movie.genres[0]?.name || movie.genres[0]
-                  : movie.genres}
-              </span>
-            )}
+          <div className="text-slate-600 text-sm">
+            <span>{releaseYear}</span>
           </div>
-
-          {/* Overview */}
-          {movie.overview && (
-            <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed">
-              {movie.overview}
-            </p>
-          )}
         </div>
       </div>
     </Link>
